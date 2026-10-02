@@ -1,0 +1,13 @@
+---
+title: "US Groceries and Gas Prices Data Exploration"
+output: html_document
+---
+
+## Data set
+
+The chosen data set to be studied was "US Groceries and Gas Prices (2015-2026) \\
+We decided that the data set is relevant to the current social/political
+issues that US citizens are confronting. High prices. \\
+
+```{r}
+```
