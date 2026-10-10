@@ -3,11 +3,60 @@ title: "US Groceries and Gas Prices Data Exploration"
 output: html_document
 ---
 
-## Data set
+## Packages
+
+```{r}
+library('dplyr')
+library('ggplot2')
+```
+
+
+## Datasets
 
 The chosen data set to be studied was "US Groceries and Gas Prices (2015-2026) \\
 We decided that the data set is relevant to the current social/political
 issues that US citizens are confronting. High prices. \\
 
 ```{r}
+avg_item_summary <- read.csv(file.choose(),header=T) #avg $ item summary
+avg_price_monthly <- read.csv(file.choose(),header=T) #avg $ monthly
+avg_price_wide <- read.csv(file.choose(),header=T) #avg $ wide
+```
+
+## Analysis 1
+
+Firstly getting the number of observations and then the number of columns in our data set.
+```{r}
+nrow(avg_item_summary)
+ncol(avg_item_summary)
+```
+
+```{r}
+summary(avg_item_summary)
+```
+
+```{r}
+
+```
+
+
+## Analysis 2
+
+```{r}
+nrow(avg_price_monthly)
+ncol(avg_price_monthly)
+```
+
+```{r}
+summary(avg_price_monthly)
+```
+## Analysis 3
+
+```{r}
+nrow(avg_price_wide)
+ncol(avg_price_wide)
+```
+
+```{r}
+summary(avg_price_wide)
 ```
