@@ -16,11 +16,13 @@ library('ggplot2')
 The chosen data set to be studied was "US Groceries and Gas Prices (2015-2026) \\
 We decided that the data set is relevant to the current social/political
 issues that US citizens are confronting. High prices. \\
+There are three different versions of the same dataset, 
+bellow three analysis will be performed, and one main dataset will be used for the research question
 
 ```{r}
-avg_item_summary <- read.csv(file.choose(),header=T) #avg $ item summary
-avg_price_monthly <- read.csv(file.choose(),header=T) #avg $ monthly
-avg_price_wide <- read.csv(file.choose(),header=T) #avg $ wide
+avg_item_summary <- read.csv(file.choose(),header=T)
+avg_price_monthly <- read.csv(file.choose(),header=T)
+avg_price_wide <- read.csv(file.choose(),header=T)
 ```
 
 ## Analysis 1
@@ -43,13 +45,59 @@ summary(avg_item_summary)
 ## Analysis 2
 
 ```{r}
-nrow(avg_price_monthly)
-ncol(avg_price_monthly)
+avg_price_monthly |>
+  glimpse()
+
+summary(avg_price_monthly)
+```
+
+
+
+Some of the columns are not necessary for this project, and they will be removed, such as data, and series_id. \\
+Additionally, year, month and category are not set as factors, so levels will be assigned to them.
+
+```{r}
+avg_price_mo <- avg_price_monthly |>
+    mutate(category = factor(category,c(
+                                        "Meat, broad category",
+                                        "Pork and deli",
+                                        "Beef",
+                                        "Drinks",
+                                        "Dairy and fats",
+                                        "Energy",
+                                        "Fruit",
+                                        "Vegetables",
+                                        "Bakery and grains",
+                                        "Poultry",
+                                        "Eggs",
+                                        "Pantry and snacks"))
+           )
+```
+
+
+
+```{r}
+avg_price_mo <- avg_price_mo[,-c(1,8)]
+nrow(avg_price_mo)
+ncol(avg_price_mo)
+summary(avg_price_mo)
+```
+```{r}
+avg_price_mo |>
+  group_by(year) |>
+  summarise(price_mean = mean(price)) |>
+    ggplot(aes(x=year,y=price_mean,fill=year))+
+  geom_bar(stat='identity')+
+  theme_classic()+
+   scale_x_continuous(limits = c(2014,2027))
 ```
 
 ```{r}
-summary(avg_price_monthly)
+avg_price_mo |>
+  group_by(item)
+
 ```
+
 ## Analysis 3
 
 ```{r}
