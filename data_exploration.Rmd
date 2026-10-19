@@ -25,27 +25,10 @@ avg_price_monthly <- read.csv(file.choose(),header=T)
 avg_price_wide <- read.csv(file.choose(),header=T)
 ```
 
-## Analysis 1
-
-Firstly getting the number of observations and then the number of columns in our data set.
-```{r}
-nrow(avg_item_summary)
-ncol(avg_item_summary)
-```
+## Average Price Monthly Analysis
 
 ```{r}
-summary(avg_item_summary)
-```
-
-```{r}
-
-```
-
-
-## Analysis 2
-
-```{r}
-avg_price_monthly |>
+avg_price_monthly %>%
   glimpse()
 
 summary(avg_price_monthly)
@@ -57,7 +40,7 @@ Some of the columns are not necessary for this project, and they will be removed
 Additionally, year, month and category are not set as factors, so levels will be assigned to them.
 
 ```{r}
-avg_price_mo <- avg_price_monthly |>
+avg_price_mo <- avg_price_monthly %>%
     mutate(category = factor(category,c(
                                         "Meat, broad category",
                                         "Pork and deli",
@@ -74,37 +57,55 @@ avg_price_mo <- avg_price_monthly |>
            )
 ```
 
+# Summary
 
+There are 8869 rows, and 8 columns in our data set.
+
+The *date*, *year*, and *month* columns are very self explanatory; the data covers 2015 through 2026.
+
+The *item* column hold an extended description of each entry. Whereas *category* is a more general description.
+
+The *unit* column hold the measurement unit of an item.
+
+The *series_id* holds identifier variables that stem from the original dataset gathered from USBLS.
+
+The *price* column is has the target variables.
 
 ```{r}
-avg_price_mo <- avg_price_mo[,-c(1,8)]
 nrow(avg_price_mo)
 ncol(avg_price_mo)
 summary(avg_price_mo)
 ```
+
+## Visualizing Categories
+
+Here we notice that 'Beef' is above all other categories in relation to price, further breaking down of what 'Beef' entails is necessary to understand it more.
+
 ```{r}
-avg_price_mo |>
-  group_by(year) |>
-  summarise(price_mean = mean(price)) |>
-    ggplot(aes(x=year,y=price_mean,fill=year))+
-  geom_bar(stat='identity')+
-  theme_classic()+
-   scale_x_continuous(limits = c(2014,2027))
+avg_price_mo %>%
+  group_by(category) %>%
+  ggplot(aes(x=category,y=sum(price)))+
+  geom_bar(stat = 'identity')+
+  theme_classic()
+```
+
+With dplyr's '*filter_out()*' function, we are able to take a deeper look into the **most expensive category**, and see if there are any issues with it, or outliers.
+
+```{r}
+only_beef <- avg_price_mo %>%
+  filter_out(category != 'Beef')
+
+only_beef %>%
+  mutate(item = as.factor(item))
+  
 ```
 
 ```{r}
-avg_price_mo |>
-  group_by(item)
+only_beef %>%
+  ggplot(aes(x = date, y = price))+
+  geom_point(color='red', size=0.1)+
+  geom_line()+
+  facet_wrap(~ item, scales = "free_y") +
+  theme_minimal()
 
-```
-
-## Analysis 3
-
-```{r}
-nrow(avg_price_wide)
-ncol(avg_price_wide)
-```
-
-```{r}
-summary(avg_price_wide)
 ```
