@@ -1,0 +1,695 @@
+---
+title: "US Groceries and Gas Prices Data Exploration"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+<br>
+
+## Packages
+
+<br>
+
+```{r}
+library(dplyr)
+library(ggplot2)
+```
+
+<br>
+
+## Datasets
+
+<br>
+
+The chosen dataset to be studied was **"US Groceries and Gas Prices (2015-2026)."**
+
+We decided that this dataset is relevant to current social and economic issues faced by many U.S. citizens, specifically the increasing cost of groceries and energy.
+
+There are three versions of the same dataset. Three analyses will be performed, and one main dataset will be used to investigate the research question:
+
+**How have grocery and fuel prices changed in the United States between 2015 and 2026, and which categories experienced the highest prices over time?**
+
+<br>
+
+```{r}
+avg_item_summary <- read.csv(file.choose(), header = TRUE)
+avg_price_monthly <- read.csv(file.choose(), header = TRUE)
+avg_price_wide <- read.csv(file.choose(), header = TRUE)
+```
+
+<br>
+
+## Average Price Monthly Analysis
+
+<br>
+
+```{r}
+avg_price_monthly %>%
+  glimpse()
+
+summary(avg_price_monthly)
+```
+
+<br>
+
+Some of the columns are not necessary for this project and will be removed, such as *series_id*. Additionally, *year*, *month*, and *category* will be converted to factors so they can be treated as categorical variables during analysis.
+
+<br>
+
+```{r}
+avg_price_mo <- avg_price_monthly %>%
+  select(-series_id) %>%
+  mutate(
+    category = factor(
+      category,
+      levels = c(
+        "Meat, broad category",
+        "Pork and deli",
+        "Beef",
+        "Drinks",
+        "Dairy and fats",
+        "Energy",
+        "Fruit",
+        "Vegetables",
+        "Bakery and grains",
+        "Poultry",
+        "Eggs",
+        "Pantry and snacks"
+      )
+    ),
+    year = factor(year),
+    month = factor(month),
+    date = as.Date(date)
+  )
+```
+
+<br>
+
+# Summary
+
+<br>
+
+There are 8,869 observations and 8 variables in the dataset.
+
+The *date*, *year*, and *month* variables describe when an observation was recorded. The data covers the period from 2015 through 2026.
+
+The *item* variable provides detailed descriptions of products, while *category* groups these products into broader classifications.
+
+The *unit* variable indicates the measurement unit associated with the item.
+
+The *price* variable contains the average observed price and serves as the primary variable of interest for this analysis.
+
+<br>
+
+```{r}
+dim(avg_price_mo)
+
+summary(avg_price_mo)
+```
+
+<br>
+
+## Visualizing Categories
+
+<br>
+
+To understand which product categories tend to have the highest prices, the average price for each category is calculated and visualized below.
+
+<br>
+
+```{r}
+avg_price_mo %>%
+  group_by(category) %>%
+  summarise(
+    mean_price = mean(price, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  ggplot(aes(
+    x = reorder(category, mean_price),
+    y = mean_price
+  )) +
+  geom_col(fill = "steelblue") +
+  coord_flip() +
+  theme_classic() +
+  labs(
+    title = "Average Price by Category",
+    x = "Category",
+    y = "Average Price"
+  )
+```
+
+<br>
+
+The graph suggests that the **Beef** category tends to have some of the highest average prices among all food categories. To explore this category further, only Beef products will be examined.
+
+<br>
+
+```{r}
+only_beef <- avg_price_mo %>%
+  filter(category == "Beef") %>%
+  mutate(item = factor(item))
+```
+
+<br>
+
+## Beef Category Exploration
+
+<br>
+
+The following visualization displays the individual Beef products across time, allowing trends and possible outliers to be observed.
+
+<br>
+
+```{r}
+only_beef %>%
+  ggplot(aes(x = date, y = price)) +
+  geom_line(color = "black") +
+  geom_point(color = "red", size = 0.8) +
+  facet_wrap(~item, scales = "free_y") +
+  theme_minimal() +
+  labs(
+    title = "Beef Prices Over Time",
+    x = "Date",
+    y = "Price"
+  )
+```
+
+<br>
+
+## Distribution of Prices by Category
+
+<br>
+
+A boxplot can be used to compare the distribution of prices across categories and identify variation and potential outliers.
+
+<br>
+
+```{r}
+ggplot(
+  avg_price_mo,
+  aes(
+    x = category,
+    y = price,
+    fill = category
+  )
+) +
+  geom_boxplot() +
+  coord_flip() +
+  theme_minimal() +
+  theme(legend.position = "none") +
+  labs(
+    title = "Price Distribution by Category",
+    x = "Category",
+    y = "Price"
+  )
+```
+
+<br>
+
+The boxplot demonstrates that price variability differs substantially across categories. Some categories exhibit wider distributions and more extreme values than others.
+
+<br>
+
+## Price Trends Over Time
+
+<br>
+
+To determine whether prices have generally increased over time, average prices are plotted across the study period for all categories.
+
+<br>
+
+```{r}
+avg_price_mo %>%
+  group_by(date, category) %>%
+  summarise(
+    avg_price = mean(price, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  ggplot(
+    aes(
+      x = date,
+      y = avg_price,
+      color = category
+    )
+  ) +
+  geom_line() +
+  theme_minimal() +
+  labs(
+    title = "Average Price Trends by Category",
+    x = "Date",
+    y = "Average Price",
+    color = "Category"
+  )
+```
+
+<br>
+
+The trend plot indicates that prices generally increased across many grocery and energy categories between 2015 and 2026. While some categories remained relatively stable, others experienced substantial increases during the observed period.
+
+<br>
+
+# Historical Inflation Analysis
+
+To better understand changes in grocery and fuel prices,
+historical U.S. inflation rates will also be examined.
+
+The historical inflation dataset contains monthly inflation
+rates beginning in 1914. This allows us to compare the
+recent period with earlier economic conditions.
+
+The purpose of this analysis is to investigate how
+inflation has changed over time and whether recent
+grocery and fuel price increases occurred alongside
+higher overall inflation.
+
+<br>
+
+## Loading Historical Inflation Data
+
+<br>
+
+```{r inflation-data}
+library(readxl)
+library(tidyr)
+library(scales)
+
+# Read historical inflation Excel file
+inflation <- read_excel(file.choose())
+
+# View dataset
+glimpse(inflation)
+summary(inflation)
+```
+
+<br>
+
+## Cleaning Historical Inflation Data
+
+<br>
+
+The dataset contains monthly inflation observations
+and an annual average for each year.
+
+To prepare the data, years after 2025 will be excluded
+because 2026 is not yet complete.
+
+The monthly columns will also be converted into long
+format to make visualization easier.
+
+<br>
+
+```{r inflation-cleaning}
+# Clean annual inflation data
+inflation_clean <- inflation %>%
+  mutate(
+    Year = as.numeric(Year),
+    Ave = as.numeric(Ave)
+  ) %>%
+  filter(Year >= 1914, Year <= 2025)
+
+# Convert monthly data into long format
+inflation_long <- inflation_clean %>%
+  pivot_longer(
+    cols = Jan:Dec,
+    names_to = "Month",
+    values_to = "Inflation",
+    values_transform = list(
+      Inflation = as.character
+    )
+  ) %>%
+  mutate(
+    Inflation = as.numeric(Inflation),
+    Decade = paste0(
+      floor(Year / 10) * 10, "s"
+    )
+  ) %>%
+  filter(!is.na(Inflation))
+
+# Check data
+glimpse(inflation_long)
+summary(inflation_long)
+```
+
+<br>
+
+## Historical Inflation by Decade
+
+<br>
+
+To understand how inflation has changed historically,
+a boxplot will be used to compare inflation rates
+across decades.
+
+The boxplot allows us to identify differences in
+variability, median inflation rates, and potential
+outliers.
+
+<br>
+
+```{r inflation-boxplot}
+ggplot(
+  inflation_long,
+  aes(
+    x = Decade,
+    y = Inflation
+  )
+) +
+  geom_boxplot(
+    fill = "steelblue",
+    color = "black",
+    alpha = 0.7
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(
+      angle = 45,
+      hjust = 1
+    )
+  ) +
+  labs(
+    title = "Historical Inflation by Decade",
+    subtitle = "U.S. Monthly Inflation Rates (1914-2025)",
+    x = "Decade",
+    y = "Inflation Rate (%)"
+  )
+```
+
+<br>
+
+This visualization helps identify which decades
+experienced the greatest inflation variability.
+
+Larger boxes indicate a wider spread in inflation
+rates, while individual points outside the whiskers
+represent potential outliers.
+
+This provides historical context for understanding
+recent changes in grocery and fuel prices.
+
+<br>
+
+## Distribution of Historical Inflation Rates
+
+<br>
+
+A histogram will be used to examine how frequently
+different inflation rates occurred between 1914
+and 2025.
+
+The visualization includes reference lines at
+0% and 5% to distinguish deflation from periods
+of relatively high inflation.
+
+<br>
+
+```{r inflation-histogram}
+ggplot(
+  inflation_long,
+  aes(x = Inflation)
+) +
+  geom_histogram(
+    binwidth = 1,
+    fill = "steelblue",
+    color = "white"
+  ) +
+  geom_vline(
+    xintercept = 0,
+    color = "red",
+    linetype = "dashed"
+  ) +
+  geom_vline(
+    xintercept = 5,
+    color = "orange",
+    linetype = "dashed"
+  ) +
+  theme_minimal() +
+  labs(
+    title = "Distribution of U.S. Inflation Rates",
+    subtitle = "Monthly Observations (1914-2025)",
+    x = "Inflation Rate (%)",
+    y = "Frequency"
+  )
+```
+
+<br>
+
+The histogram allows us to examine whether moderate
+inflation rates occur more frequently than extreme
+inflation rates.
+
+Values below zero indicate periods of deflation,
+while values above 5% represent relatively high
+inflation.
+
+<br>
+
+## Inflation Frequency Summary
+
+<br>
+
+```{r inflation-frequency}
+inflation_long %>%
+  summarise(
+    Total = n(),
+    Below_Zero = sum(Inflation < 0),
+    Zero_to_Five = sum(
+      Inflation >= 0 & Inflation <= 5
+    ),
+    Above_Five = sum(Inflation > 5)
+  )
+```
+
+<br>
+
+## Recent Inflation Trends (2015-2025)
+
+<br>
+
+Since the grocery and fuel price dataset covers
+2015 through 2026, a closer examination of inflation
+during the overlapping years will be conducted.
+
+This allows us to compare changes in overall inflation
+with changes in grocery and energy prices.
+
+<br>
+
+```{r recent-inflation}
+recent_inflation <- inflation_clean %>%
+  filter(
+    Year >= 2015,
+    Year <= 2025
+  )
+
+ggplot(
+  recent_inflation,
+  aes(
+    x = Year,
+    y = Ave
+  )
+) +
+  geom_line(
+    color = "steelblue",
+    linewidth = 1.2
+  ) +
+  geom_point(
+    color = "darkblue",
+    size = 3
+  ) +
+  scale_x_continuous(
+    breaks = 2015:2025
+  ) +
+  scale_y_continuous(
+    labels = label_number(suffix = "%")
+  ) +
+  theme_minimal() +
+  labs(
+    title = "U.S. Inflation Trends (2015-2025)",
+    subtitle = "Annual Average Inflation Rate",
+    x = "Year",
+    y = "Inflation Rate (%)"
+  )
+```
+
+<br>
+
+The visualization highlights the increase in
+inflation during 2021 and 2022, followed by
+a decline in subsequent years.
+
+This period is particularly relevant because
+the grocery and fuel price dataset also covers
+these years.
+
+However, a decline in inflation does not
+necessarily indicate that prices decreased.
+It may instead indicate that prices continued
+increasing at a slower rate.
+
+<br>
+
+## Comparing Grocery and Fuel Prices Over Time
+
+<br>
+
+To compare product prices with inflation, grocery
+and fuel prices will be converted into an index
+using 2015 as the base year.
+
+An index value of 100 represents the average
+price in 2015. Values above 100 indicate that
+prices increased relative to the base year.
+
+<br>
+
+
+```{r price-index, fig.width=12, fig.height=7}
+# Calculate average annual price for each item
+item_yearly <- avg_price_mo %>%
+  mutate(year = as.numeric(as.character(year))) %>%
+  filter(
+    year >= 2015,
+    year <= 2025,
+    !is.na(price)
+  ) %>%
+  group_by(category, item, unit, year) %>%
+  summarise(
+    avg_price = mean(price),
+    .groups = "drop"
+  )
+
+# Calculate 2015 base prices
+base_prices <- item_yearly %>%
+  filter(year == 2015, avg_price > 0) %>%
+  select(
+    category,
+    item,
+    unit,
+    base_price = avg_price
+  )
+
+# Calculate index for items with 2015 data
+price_index <- item_yearly %>%
+  inner_join(
+    base_prices,
+    by = c("category", "item", "unit")
+  ) %>%
+  mutate(
+    index = (avg_price / base_price) * 100
+  )
+
+# Average indexed prices by category and year
+category_index <- price_index %>%
+  group_by(year, category) %>%
+  summarise(
+    avg_index = mean(index, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+# Plot indexed price changes
+ggplot(
+  category_index,
+  aes(
+    x = year,
+    y = avg_index,
+    color = category
+  )
+) +
+  geom_line(linewidth = 1.2) +
+  geom_hline(
+    yintercept = 100,
+    linetype = "dashed",
+    color = "black"
+  ) +
+  scale_x_continuous(
+    breaks = 2015:2025
+  ) +
+  scale_color_manual(
+    values = c(
+      "Meat, broad category" = "#D55E00",
+      "Pork and deli" = "#A65628",
+      "Beef" = "#C2185B",
+      "Drinks" = "#7B61A8",
+      "Dairy and fats" = "#008837",
+      "Energy" = "#009E73",
+      "Fruit" = "#E69F00",
+      "Vegetables" = "#0072B2",
+      "Bakery and grains" = "#56B4E9",
+      "Poultry" = "#6A3D9A",
+      "Eggs" = "#E7298A",
+      "Pantry and snacks" = "#555555"
+    )
+  ) +
+  theme_minimal() +
+  theme(
+    legend.position = "right",
+    legend.title = element_text(size = 12),
+    legend.text = element_text(size = 10),
+    axis.text.x = element_text(size = 10),
+    axis.text.y = element_text(size = 10),
+    plot.title = element_text(
+      size = 16,
+      face = "bold"
+    ),
+    plot.subtitle = element_text(size = 12)
+  ) +
+  labs(
+    title = "Grocery and Fuel Price Changes",
+    subtitle = "Price Index (2015 = 100)",
+    x = "Year",
+    y = "Price Index",
+    color = "Category"
+  )
+```
+
+
+<br>
+
+The indexed price comparison helps identify
+which grocery and fuel categories experienced
+the greatest relative price increases.
+
+Unlike comparing average prices directly,
+the index allows products measured in different
+units to be compared based on percentage change.
+
+Only products with available 2015 baseline
+prices are included in this comparison.
+
+<br>
+
+## Historical Inflation Analysis Conclusion
+
+<br>
+
+The historical inflation analysis provides
+additional context for understanding changes
+in grocery and fuel prices.
+
+The boxplot and histogram examine inflation
+patterns over more than a century, while the
+recent inflation graph focuses on the period
+relevant to the grocery and fuel dataset.
+
+The indexed price comparison allows us to
+identify which categories experienced the
+largest relative increases since 2015.
+
+Together, these visualizations help explore
+whether grocery and fuel price changes occurred
+alongside broader inflationary trends.
+
+However, these descriptive visualizations
+do not establish a causal relationship between
+energy prices, grocery prices, and inflation.
+
+# Conclusion
+
+<br>
+
+This exploratory analysis examined grocery and fuel prices in the United States from 2015 through 2026.
+
+The results suggest that price levels vary considerably among product categories, with Beef consistently appearing among the highest-priced categories. The boxplot analysis also revealed substantial variation within categories, while the time-series analysis indicated that many categories experienced increasing prices over time.
+
+Future analyses could investigate specific products that experienced the largest price increases and determine whether certain categories were more affected by inflationary pressures than others.
