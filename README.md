@@ -34,3 +34,16 @@ SOURCE AND LICENSE US Bureau of Labor Statistics, Average Price Data (AP), U.S. 
 Built from ap.series plus ap.data.3.Food, ap.data.2.Gasoline and ap.data.1.HouseholdFuels, filtered to area_code 0000 (national). \\
 Works of the US federal government are in the public domain (CC0). \\
 BLS does not endorse this compilation.
+
+## Version Control
+Renv was not used, here are some outputs from sessionInfo(): \\
+R version 4.6.2 (2026-10-29) \\
+attached base packages:
+[1] stats     graphics  grDevices datasets 
+[5] utils     methods   base     
+
+other attached packages:
+ [1] rstatix_1.1.0   readxl_1.6.0    lubridate_1.9.5
+ [4] forcats_1.0.1   stringr_1.6.0   dplyr_1.2.1    
+ [7] purrr_1.2.2     readr_2.2.0     tidyr_1.3.2    
+[10] tibble_3.3.1    ggplot2_4.0.4   tidyverse_2.0.0
